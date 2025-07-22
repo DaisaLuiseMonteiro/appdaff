@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 use Dotenv\Dotenv;
+use Cloudinary\Cloudinary;
+use Cloudinary\Configuration\Configuration;
 
 // Chargement de .env s'il est présent
 if (file_exists(__DIR__ . '/../.env')) {
@@ -52,44 +54,77 @@ class Seeder {
 
     public static function run()
     {
+        $citoyens = [
+    [
+        'nom' => 'Diop',
+        'prenom' => 'Amadou',
+        'numerocni' => '1199912345678950',
+        'photoidentite' => 'image.png',
+        'lieuNaiss' => 'Dakar',
+        'dateNaiss' => '1990-05-15'
+    ]/* ,
+    [
+        'nom' => 'Fall',
+        'prenom' => 'Fatou',
+        'numerocni' => '1199987654321098',
+        'photoidentite' => 'image.png',
+        'lieuNaiss' => 'Saint-Louis',
+        'dateNaiss' => '1995-08-22'
+    ],
+    [
+        'nom' => 'Ndiaye',
+        'prenom' => 'Moussa',
+        'numerocni' => '1199955555555555',
+        'photoidentite' => 'image.png',
+        'lieuNaiss' => 'Thiès',
+        'dateNaiss' => '1988-03-10'
+    ],
+    [
+        'nom' => 'Gueye',
+        'prenom' => 'Ramatoulaye',
+        'numerocni' => 'CNI1090',
+        'photoidentite' => null, 
+        'lieuNaiss' => 'Dakar',
+        'dateNaiss' => '1995-01-02'
+    ] */
+];
+
         self::connect();
+        $cloud = require __DIR__ . '/../app/config/cloudinary.php';
+            Configuration::instance([
+            'cloud' => [
+            'cloud_name' => $cloud['cloud_name'],
+            'api_key' => $cloud['api_key'],
+            'api_secret' => $cloud['api_secret'],
+            ],
+            'url' => ['secure' => true]
+            ]);
+            $cloudinary = new Cloudinary(Configuration::instance());
 
-        try {
-            // Insertion des données de test pour les tables citoyen et journalisation
-            echo "Insertion des données de test...\n";
-            
-            // Insertion de citoyens
-            self::$pdo->exec("INSERT INTO citoyen (nom, prenom, numerocni, photoidentite, lieuNaiss, dateNaiss) VALUES 
-                ('Diop', 'Amadou', '1199912345678901', 'photo_amadou.jpg', 'Dakar', '1990-05-15'),
-                ('Fall', 'Fatou', '1199987654321098', 'photo_fatou.jpg', 'Saint-Louis', '1995-08-22'),
-                ('Ndiaye', 'Moussa', '1199955555555555', 'photo_moussa.jpg', 'Thiès', '1988-03-10')
-            ON CONFLICT (numerocni) DO NOTHING");
-            echo "Citoyens insérés.\n";
 
-            // Insertion des journalisations (récupérer les IDs des citoyens)
-            $stmt = self::$pdo->query("SELECT id FROM citoyen LIMIT 3");
-            $citoyenIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            
-            if (count($citoyenIds) >= 3) {
-                self::$pdo->exec("INSERT INTO journalisation (date, heure, localisation, ipadress, status, citoyenId) VALUES 
-                    ('2024-01-15 09:30:00', '2024-01-15 09:30:00', 'Dakar - Bureau des CNI', '192.168.1.10', true, {$citoyenIds[0]}),
-                    ('2024-01-16 14:15:00', '2024-01-16 14:15:00', 'Saint-Louis - Mairie', '192.168.2.20', true, {$citoyenIds[1]}),
-                    ('2024-01-17 11:45:00', '2024-01-17 11:45:00', 'Thiès - Préfecture', '192.168.3.30', false, {$citoyenIds[2]})");
-                echo "Journalisations insérées.\n";
-            }
+            foreach ($citoyens as $citoyen) {
+            try {
+            $imagePath = __DIR__ . '/images/' . $citoyen['photoidentite'];
+            $upload = $cloudinary->uploadApi()->upload($imagePath, ['folder' => 'cni/recto']);
+            $url = $upload['secure_url'];
+            $stmt = self::$pdo->prepare("
+            INSERT INTO citoyen (nom, prenom, dateNaiss,  lieuNaiss,  numerocni, photoidentite)
+            VALUES (:nom, :prenom, :dateNaiss, :lieuNaiss, :numerocni, :photoidentite)");
 
-            echo "Toutes les données de test ont été insérées avec succès.\n";
-
-        } catch (PDOException $e) {
-            echo "Erreur lors de l'insertion des données: " . $e->getMessage() . "\n";
+            $stmt->execute([
+            'nom' => $citoyen['nom'],
+            'prenom' => $citoyen['prenom'],
+            'dateNaiss' => $citoyen['dateNaiss'],
+            'lieuNaiss' => $citoyen['lieuNaiss'],
+            'numerocni' => $citoyen['numerocni'],
+            'photoidentite' => $url
             
-            // Afficher plus de détails sur l'erreur
-            if ($e->getCode() === '42P01') {
-                echo "Erreur: Une ou plusieurs tables n'existent pas. Assurez-vous d'avoir exécuté les migrations d'abord.\n";
-            }
-            
-            throw $e;
-        }
+        ]); 
+        
+        } catch (Exception $e) {
+                echo 'Erreur lors de lupload : ', $e->getMessage();
+                }
+                }    
     }
 }
 
