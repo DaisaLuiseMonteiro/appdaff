@@ -5,3 +5,7 @@ php-fpm -D
 
 # Lancer nginx en avant-plan
 nginx -g "daemon off;"
+# selectbyid
+#        bycni
+#        byselectall
+#        insert
