@@ -27,7 +27,6 @@ class Seeder {
                 // Utiliser localhost en local ou récupérer depuis .env
                 $dsn = getenv('DSN') ?: $_ENV['DSN'] ?? 'pgsql:host=localhost;port=5433;dbname=gestion_auchan';
             }
-            
             $user = getenv('DB_USER') ?: $_ENV['DB_USER'] ?? null;
             $password = getenv('DB_PASSWORD') ?: $_ENV['DB_PASSWORD'] ?? null;
 
