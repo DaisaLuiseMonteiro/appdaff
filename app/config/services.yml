@@ -1,0 +1,22 @@
+core:
+  database: App\Core\Database
+  session: App\Core\Session
+  validator: App\Core\Validator
+  router: App\Core\Router
+  imageServ: App\Core\ImageService
+
+abstract:
+  abstractRepo: App\Core\Abstract\AbstractRepository
+  abstractController: App\Core\Abstract\AbstractController
+  abstractEntity: App\Core\Abstract\AbstractEntity
+
+services:
+  securityServ: App\Service\SecurityService
+  compteServ: App\Service\CompteService
+  transactionServ: App\Service\TransactionService
+
+repositories:
+  usersRepo: App\Repository\UsersRepository
+  compteRepo: App\Repository\CompteRepository
+  transactionRepo: App\Repository\TransactionRepository
+  telephoneRepo: App\Repository\TelephoneRepository
